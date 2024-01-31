@@ -10,9 +10,23 @@
 #include <audio/service/audioservice.h>
 #include <audio/node/outputnode.h>
 
+RTTI_BEGIN_ENUM(nap::audio::ETimecodeContol)
+RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::SERATO_2A, "serato_2a"),
+RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::SERATO_2B, "serato_2b"),
+RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::SERATO_CD, "serato_cd"),
+RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::TRACTOR_A, "traktor_a"),
+RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::TRACTOR_B, "traktor_b"),
+RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::MIXVIBES_V2, "mixvibes_v2"),
+RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::MIXVIBES_7INCH, "mixvibes_7inch"),
+RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::PIONEER_A, "pioneer_a"),
+RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::PIONEER_B, "pioneer_b")
+RTTI_END_ENUM
+
 RTTI_BEGIN_CLASS(nap::audio::TimecoderComponent)
         RTTI_PROPERTY("Input", &nap::audio::TimecoderComponent::mInput, nap::rtti::EPropertyMetaData::Required)
         RTTI_PROPERTY("ChannelRouting", &nap::audio::TimecoderComponent::mChannelRouting, nap::rtti::EPropertyMetaData::Default)
+        RTTI_PROPERTY("Control", &nap::audio::TimecoderComponent::mControl, nap::rtti::EPropertyMetaData::Default)
+        RTTI_PROPERTY("ReferenceSpeed", &nap::audio::TimecoderComponent::mReferenceSpeed, nap::rtti::EPropertyMetaData::Default)
 RTTI_END_CLASS
 
 RTTI_BEGIN_CLASS_NO_DEFAULT_CONSTRUCTOR(nap::audio::TimecoderComponentInstance)
@@ -23,6 +37,18 @@ using namespace nap::audio;
 
 namespace nap
 {
+    bool TimecoderComponent::hasInstance() const
+    {
+        return mInstance != nullptr;
+    }
+
+    TimecoderComponentInstance& TimecoderComponent::getInstance() const
+    {
+        assert(mInstance);
+        return *mInstance;
+    }
+
+
     TimecoderComponentInstance::~TimecoderComponentInstance()
     {
     }
@@ -43,7 +69,10 @@ namespace nap
 
         // acquire resources
         auto* resource = getComponent<TimecoderComponent>();
+        resource->mInstance = this;
         auto& channelRouting = resource->mChannelRouting;
+        mControl = resource->mControl;
+        mReferenceSpeed = resource->mReferenceSpeed;
 
         if(!errorState.check(mInput->getChannelCount() == 2, "%s: Input must have 2 channels.", resource->mID.c_str()))
             return false;
@@ -67,18 +96,35 @@ namespace nap
         }
 
         //
-        mTimecoderNode = nodeManager.makeSafe<TimecoderNode>(nodeManager);
+        mTimecoderNode = nodeManager.makeSafe<TimecoderNode>(nodeManager, mReferenceSpeed, mControl);
         mTimecoderNode->audioLeft.connect(*mInput->getOutputForChannel(channelRouting[0]));
         mTimecoderNode->audioRight.connect(*mInput->getOutputForChannel(channelRouting[1]));
         nodeManager.registerRootProcess(*mTimecoderNode);
-
-        mTimer.start();
         return true;
     }
 
     void TimecoderComponentInstance::update(double deltaTime)
     {
-        mTimecoderNode->consumeTimeAndPitch(mTime, mPitch);
+        mTimecoderNode->consumeTimeAndPitch(mTimecode, mPitch);
         mRelativeTime += mPitch * deltaTime;
+    }
+
+    void TimecoderComponentInstance::setControl(ETimecodeContol control)
+    {
+        if(mControl != control)
+        {
+            mControl = control;
+            mTimecoderNode->changeControl(mControl);
+        }
+    }
+
+
+    void TimecoderComponentInstance::setReferenceSpeed(float referenceSpeed)
+    {
+        if(mReferenceSpeed != referenceSpeed)
+        {
+            mReferenceSpeed = referenceSpeed;
+            mTimecoderNode->changeReferenceSpeed(mReferenceSpeed);
+        }
     }
 }

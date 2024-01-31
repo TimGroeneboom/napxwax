@@ -17,40 +17,71 @@ namespace nap
 {
     namespace audio
     {
-        class TimecoderNode::Impl
+        static std::unordered_map<ETimecodeContol, const char*> timecoderLookup =
         {
-        public:
-            Impl() = default;
-            ~Impl()
-            {
-                if(inited)
-                {
-                    timecoder_clear(&tc);
-                }
-            }
-
-            struct timecoder tc;
-            struct timecode_def *def;
-            bool inited = false;
+            { ETimecodeContol::SERATO_2A,       "serato_2a"     },
+            { ETimecodeContol::SERATO_2B,       "serato_2b"     },
+            { ETimecodeContol::SERATO_CD,       "serato_cd"     },
+            { ETimecodeContol::TRACTOR_A,       "traktor_a"     },
+            { ETimecodeContol::TRACTOR_B,       "traktor_b"     },
+            { ETimecodeContol::MIXVIBES_V2,     "mixvibes_v2"   },
+            { ETimecodeContol::MIXVIBES_7INCH,  "mixvibes_7inch"},
+            { ETimecodeContol::PIONEER_A,       "pioneer_a"     },
+            { ETimecodeContol::PIONEER_B,       "pioneer_b"     }
         };
 
 
-        TimecoderNode::TimecoderNode(NodeManager& nodeManager) : Node(nodeManager)
+        class TimecoderNode::Impl
         {
-            mImpl = std::make_unique<Impl>();
-            mImpl->def = timecoder_find_definition("serato_2a");
-            assert(mImpl->def != nullptr);
+        public:
+            Impl(timecoder&& tc) : tc(tc){}
+            ~Impl(){ timecoder_clear(&tc); }
 
-            timecoder_init(&mImpl->tc, mImpl->def, 1.0, static_cast<int>(nodeManager.getSampleRate()), false);
-            mImpl->inited = true;
+            struct timecoder tc;
+        };
+
+
+        TimecoderNode::TimecoderNode(NodeManager& nodeManager,
+                                     float referenceSpeed,
+                                     ETimecodeContol control) : Node(nodeManager)
+        {
+            mReferenceSpeed = referenceSpeed;
+            mControl = control;
+
+            assert(timecoderLookup.find(mControl) != timecoderLookup.end());
+            createTimecoder();
         }
 
 
         TimecoderNode::~TimecoderNode() = default;
 
 
+        void TimecoderNode::createTimecoder()
+        {
+            auto control = mControl;
+            int sample_rate = static_cast<int>(getNodeManager().getSampleRate());
+            auto reference_speed = mReferenceSpeed;
+
+            mTaskQueue.enqueue([this, control, sample_rate, reference_speed]()
+            {
+                auto* definition = timecoder_find_definition(timecoderLookup[control]);
+                assert(definition != nullptr);
+                struct timecoder tc;
+                timecoder_init(&tc, definition, reference_speed, sample_rate, false);
+                mImpl = std::make_unique<Impl>(std::move(tc));
+            });
+        }
+
+
         void TimecoderNode::process()
         {
+            while(mTaskQueue.size_approx() > 0)
+            {
+                std::function<void()> task;
+                mTaskQueue.try_dequeue(task);
+                task();
+            }
+
             assert(audioLeft.isConnected());
             assert(audioRight.isConnected());
 
@@ -82,12 +113,30 @@ namespace nap
         }
 
 
+        void TimecoderNode::changeControl(ETimecodeContol control)
+        {
+            if(mControl != control)
+            {
+                mControl = control;
+                assert(timecoderLookup.find(mControl) != timecoderLookup.end());
+                createTimecoder();
+            }
+        }
+
+
+        void TimecoderNode::changeReferenceSpeed(float referenceSpeed)
+        {
+            if(mReferenceSpeed != referenceSpeed)
+            {
+                mReferenceSpeed = referenceSpeed;
+                createTimecoder();
+            }
+        }
+
+
         void TimecoderNode::sampleRateChanged(float sampleRate)
         {
-            mImpl = std::make_unique<Impl>();
-            mImpl->def = timecoder_find_definition("serato_cd");
-            timecoder_init(&mImpl->tc, mImpl->def, 1.0, static_cast<int>(getNodeManager().getSampleRate()), false);
-            mImpl->inited = true;
+            createTimecoder();
         }
     }
 
