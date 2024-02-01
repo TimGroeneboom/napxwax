@@ -34,8 +34,18 @@ namespace nap
         class TimecoderNode::Impl
         {
         public:
-            Impl(timecoder&& tc) : tc(tc){}
-            ~Impl(){ timecoder_clear(&tc); }
+            Impl(ETimecodeContol control, float referenceSpeed, int sampleRate)
+            {
+                assert(timecoderLookup.find(control) != timecoderLookup.end());
+                auto* definition = timecoder_find_definition(timecoderLookup[control]);
+                assert(definition != nullptr);
+                timecoder_init(&tc, definition, referenceSpeed, sampleRate, false);
+            }
+
+            ~Impl()
+            {
+                timecoder_clear(&tc);
+            }
 
             struct timecoder tc;
         };
@@ -58,17 +68,20 @@ namespace nap
 
         void TimecoderNode::createTimecoder()
         {
+            // first dequeue any previous creation tasks, just in case
+            while(mTaskQueue.size_approx() > 0)
+            {
+                std::function<void()> task;
+                mTaskQueue.try_dequeue(task);
+            }
+
+            // move the creation to the task queue
             auto control = mControl;
             int sample_rate = static_cast<int>(getNodeManager().getSampleRate());
             auto reference_speed = mReferenceSpeed;
-
             mTaskQueue.enqueue([this, control, sample_rate, reference_speed]()
             {
-                auto* definition = timecoder_find_definition(timecoderLookup[control]);
-                assert(definition != nullptr);
-                struct timecoder tc;
-                timecoder_init(&tc, definition, reference_speed, sample_rate, false);
-                mImpl = std::make_unique<Impl>(std::move(tc));
+                mImpl = std::make_unique<Impl>(control, reference_speed, sample_rate);
             });
         }
 
@@ -82,6 +95,7 @@ namespace nap
                 task();
             }
 
+            assert(mImpl != nullptr);
             assert(audioLeft.isConnected());
             assert(audioRight.isConnected());
 

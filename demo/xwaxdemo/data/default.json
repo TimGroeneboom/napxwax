@@ -1,0 +1,114 @@
+{
+    "Objects": [
+        {
+            "Type": "nap::AppGUI",
+            "mID": "AppGUI",
+            "Widget Groups": [
+                "AppGUIWindows"
+            ]
+        },
+        {
+            "Type": "nap::AppGUIWindowGroup",
+            "mID": "AppGUIWindows",
+            "Items": [
+                {
+                    "Type": "nap::TimecoderWindow",
+                    "mID": "Timecoder",
+                    "Name": "Timecoder",
+                    "TimecoderComponent": "TimecoderComponent"
+                },
+                {
+                    "Type": "nap::PlaybackControlWindow",
+                    "mID": "PlaybackControl",
+                    "Name": "PlaybackControl",
+                    "Scene": "Scene",
+                    "PlaybackEntity": "TimecoderEntity"
+                }
+            ],
+            "Name": "Windows"
+        },
+        {
+            "Type": "nap::Entity",
+            "mID": "TimecoderEntity",
+            "Components": [
+                {
+                    "Type": "nap::audio::PlaybackComponent",
+                    "mID": "SeratoPlayback",
+                    "Buffer": "TestAudio",
+                    "ChannelRouting": [
+                        0,
+                        1
+                    ],
+                    "Gain": 1.0,
+                    "StereoPanning": 0.5,
+                    "AutoPlay": true,
+                    "StartPosition": 76000.0,
+                    "Duration": 0.0,
+                    "FadeInTime": 0.0,
+                    "FadeOutTime": 0.0,
+                    "Pitch": -1.0
+                },
+                {
+                    "Type": "nap::audio::TimecoderComponent",
+                    "mID": "TimecoderComponent",
+                    "Input": "./SeratoPlayback",
+                    "ChannelRouting": [
+                        0,
+                        1
+                    ],
+                    "Control": "serato_2b",
+                    "ReferenceSpeed": 1.0
+                },
+                {
+                    "Type": "nap::audio::OutputComponent",
+                    "mID": "OutputComponent",
+                    "Input": "./SeratoPlayback",
+                    "Routing": [
+                        0,
+                        1
+                    ]
+                }
+            ],
+            "Children": []
+        },
+        {
+            "Type": "nap::RenderWindow",
+            "mID": "Window",
+            "Borderless": false,
+            "Resizable": true,
+            "Visible": true,
+            "SampleShading": true,
+            "Title": "xwax demo",
+            "Width": 1280,
+            "Height": 720,
+            "Mode": "Immediate",
+            "ClearColor": {
+                "Values": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            },
+            "Samples": "Four",
+            "AdditionalSwapImages": 1,
+            "RestoreSize": true,
+            "RestorePosition": true
+        },
+        {
+            "Type": "nap::Scene",
+            "mID": "Scene",
+            "Entities": [
+                {
+                    "Entity": "TimecoderEntity",
+                    "InstanceProperties": []
+                }
+            ]
+        },
+        {
+            "Type": "nap::audio::AudioFileResource",
+            "mID": "TestAudio",
+            "AudioFilePath": "serato_scratch.ogg"
+        }
+    ]
+}

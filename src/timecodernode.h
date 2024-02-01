@@ -80,6 +80,10 @@ namespace audio
         InputPin audioLeft  = {this};
         InputPin audioRight = {this};
     private:
+        /**
+         * Implementation in .cpp file
+         * Implementation wraps the timecoder struct from xwax
+         */
         class Impl;
         std::unique_ptr<Impl> mImpl;
         double pos = 0.0;
@@ -93,6 +97,9 @@ namespace audio
         float mReferenceSpeed = 1.0f;
         ETimecodeContol mControl;
 
+        /**
+         * Creates a new timecoder, creation will be queued and executed in the process method.
+         */
         void createTimecoder();
         moodycamel::ConcurrentQueue<std::function<void()>> mTaskQueue;
     };
