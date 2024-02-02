@@ -39,15 +39,12 @@ namespace nap
                 assert(timecoderLookup.find(control) != timecoderLookup.end());
                 auto* definition = timecoder_find_definition(timecoderLookup[control]);
                 assert(definition != nullptr);
-                timecoder_init(&tc, definition, referenceSpeed, sampleRate, false);
+                timecoder_init(&mTimeCoder, definition, referenceSpeed, sampleRate, false);
             }
 
-            ~Impl()
-            {
-                timecoder_clear(&tc);
-            }
+            virtual ~Impl() = default;
 
-            struct timecoder tc;
+            timecoder mTimeCoder;
         };
 
 
@@ -57,8 +54,6 @@ namespace nap
         {
             mReferenceSpeed = referenceSpeed;
             mControl = control;
-
-            assert(timecoderLookup.find(mControl) != timecoderLookup.end());
             createTimecoder();
         }
 
@@ -72,7 +67,8 @@ namespace nap
             while(mTaskQueue.size_approx() > 0)
             {
                 std::function<void()> task;
-                mTaskQueue.try_dequeue(task);
+                while(mTaskQueue.try_dequeue(task))
+                    task();
             }
 
             // move the creation to the task queue
@@ -88,12 +84,9 @@ namespace nap
 
         void TimecoderNode::process()
         {
-            while(mTaskQueue.size_approx() > 0)
-            {
-                std::function<void()> task;
-                mTaskQueue.try_dequeue(task);
+            std::function<void()> task;
+            while(mTaskQueue.try_dequeue(task))
                 task();
-            }
 
             assert(mImpl != nullptr);
             assert(audioLeft.isConnected());
@@ -106,11 +99,11 @@ namespace nap
             {
                 mSamples[0] = static_cast<short>(mBuffers[0]->at(s) * (1<<15));
                 mSamples[1] = static_cast<short>(mBuffers[1]->at(s) * (1<<15));
-                timecoder_submit(&mImpl->tc, mSamples, 1);
+                timecoder_submit(&mImpl->mTimeCoder, mSamples, 1);
             }
 
-            mPitch.store(timecoder_get_pitch(&mImpl->tc));
-            mTime.store(static_cast<double>(timecoder_get_position(&mImpl->tc, &pos)) / 1000);
+            mPitch.store(timecoder_get_pitch(&mImpl->mTimeCoder));
+            mTime.store(static_cast<double>(timecoder_get_position(&mImpl->mTimeCoder, &pos)) / 1000);
             mDirty.set();
         }
 
@@ -132,7 +125,6 @@ namespace nap
             if(mControl != control)
             {
                 mControl = control;
-                assert(timecoderLookup.find(mControl) != timecoderLookup.end());
                 createTimecoder();
             }
         }
