@@ -164,7 +164,7 @@
                 "HostApi": "",
                 "InputDevice": "",
                 "OutputDevice": "",
-                "InputChannelCount": 1,
+                "InputChannelCount": 2,
                 "OutputChannelCount": 2,
                 "DisableInput": false,
                 "DisableOutput": false,

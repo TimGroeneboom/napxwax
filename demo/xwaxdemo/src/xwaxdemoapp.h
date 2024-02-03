@@ -80,8 +80,6 @@ namespace nap
 		IMGuiService*				mGuiService = nullptr;			///< Manages GUI related update / draw calls
 		ObjectPtr<RenderWindow>		mRenderWindow;					///< Pointer to the render window	
 		ObjectPtr<Scene>			mScene = nullptr;				///< Pointer to the main scene
-		ObjectPtr<EntityInstance>	mCameraEntity = nullptr;		///< Pointer to the entity that holds the perspective camera
-		ObjectPtr<EntityInstance>	mGnomonEntity = nullptr;		///< Pointer to the entity that can render the gnomon
 		ObjectPtr<EntityInstance>	mTimecoderEntity = nullptr;
         ObjectPtr<AppGUI>           mAppGUI = nullptr;              ///< Pointer to the app gui
 	};

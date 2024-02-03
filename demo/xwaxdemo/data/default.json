@@ -18,9 +18,9 @@
                     "TimecoderComponent": "TimecoderComponent"
                 },
                 {
-                    "Type": "nap::PlaybackControlWindow",
-                    "mID": "PlaybackControl",
-                    "Name": "PlaybackControl",
+                    "Type": "nap::AudioControlWindow",
+                    "mID": "AudioControlWindow",
+                    "Name": "AudioControl",
                     "Scene": "Scene",
                     "PlaybackEntity": "TimecoderEntity"
                 }
@@ -67,6 +67,15 @@
                         0,
                         1
                     ]
+                },
+                {
+                    "Type": "nap::audio::AudioInputComponent",
+                    "mID": "InputComponent",
+                    "Channels": [
+                        0,
+                        1
+                    ],
+                    "Gain": 1.0
                 }
             ],
             "Children": []

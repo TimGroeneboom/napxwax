@@ -38,12 +38,6 @@ namespace nap
         if (!error.check(mAppGUI != nullptr, "unable to find app gui with name: %s", "AppGUI"))
             return false;
 
-		// Get the camera and origin Gnomon entity
-		mCameraEntity = mScene->findEntity("CameraEntity");
-		mGnomonEntity = mScene->findEntity("GnomonEntity");
-        mTimecoderEntity = mScene->findEntity("TimecoderEntity");
-
-
 		// All done!
         return true;
     }
@@ -62,18 +56,6 @@ namespace nap
 		{
 			// Begin render pass
 			mRenderWindow->beginRendering();
-
-			// Get Perspective camera to render with
-			auto& perp_cam = mCameraEntity->getComponent<PerspCameraComponentInstance>();
-
-			// Add Gnomon
-			std::vector<nap::RenderableComponentInstance*> components_to_render
-			{
-				&mGnomonEntity->getComponent<RenderGnomonComponentInstance>()
-			};
-
-			// Render Gnomon
-			mRenderService->renderObjects(*mRenderWindow, perp_cam, components_to_render);
 
 			// Draw GUI elements
 			mGuiService->draw();
@@ -126,6 +108,7 @@ namespace nap
 		nap::DefaultInputRouter input_router(true);
 		mInputService->processWindowEvents(*mRenderWindow, input_router, { &mScene->getRootEntity() });
 
+        // draw app gui
         mAppGUI->draw(deltaTime);
     }
 }

@@ -7,7 +7,7 @@
 #include <nap/resourcemanager.h>
 #include <nap/logger.h>
 #include <iostream>
-#include <playbackcontrolwindow.h>
+#include <audiocontrolwindow.h>
 
 RTTI_BEGIN_CLASS_NO_DEFAULT_CONSTRUCTOR(nap::XWaxDemoService)
         RTTI_CONSTRUCTOR(nap::ServiceConfiguration*)
