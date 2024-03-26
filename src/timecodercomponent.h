@@ -146,6 +146,11 @@ namespace nap
              */
             float getReferenceSpeed() const { return mReferenceSpeed; }
 
+            /**
+             * Returns reference to the TimecoderNode
+             * @return reference to the TimecoderNode
+             */
+            audio::TimecoderNode& getTimecoderNode() { return *mTimecoderNode; }
         private:
             ComponentInstancePtr<audio::AudioComponentBase> mInput	= { this, &TimecoderComponent::mInput };
             audio::SafeOwner<audio::TimecoderNode> mTimecoderNode = nullptr;

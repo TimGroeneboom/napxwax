@@ -48,6 +48,12 @@ namespace nap
         };
 
 
+        TimecoderNode::TimecoderNode(NodeManager& nodeManager) : Node(nodeManager)
+        {
+            createTimecoder();
+        }
+
+
         TimecoderNode::TimecoderNode(NodeManager& nodeManager,
                                      float referenceSpeed,
                                      ETimecodeContol control) : Node(nodeManager)
@@ -64,18 +70,17 @@ namespace nap
         void TimecoderNode::createTimecoder()
         {
             // first dequeue any previous creation tasks, just in case
-            while(mTaskQueue.size_approx() > 0)
+            while(mCreationQueue.size_approx() > 0)
             {
                 std::function<void()> task;
-                while(mTaskQueue.try_dequeue(task))
-                    task();
+                while(mCreationQueue.try_dequeue(task)){}
             }
 
             // move the creation to the task queue
             auto control = mControl;
             int sample_rate = static_cast<int>(getNodeManager().getSampleRate());
             auto reference_speed = mReferenceSpeed;
-            mTaskQueue.enqueue([this, control, sample_rate, reference_speed]()
+            mCreationQueue.enqueue([this, control, sample_rate, reference_speed]()
             {
                 mImpl = std::make_unique<Impl>(control, reference_speed, sample_rate);
             });
@@ -85,7 +90,7 @@ namespace nap
         void TimecoderNode::process()
         {
             std::function<void()> task;
-            while(mTaskQueue.try_dequeue(task))
+            while(mCreationQueue.try_dequeue(task))
                 task();
 
             assert(mImpl != nullptr);
@@ -105,6 +110,12 @@ namespace nap
             mPitch.store(timecoder_get_pitch(&mImpl->mTimeCoder));
             mTime.store(static_cast<double>(timecoder_get_position(&mImpl->mTimeCoder, &pos)) / 1000);
             mDirty.set();
+        }
+
+
+        float TimecoderNode::getPitch()
+        {
+            return mPitch.load();
         }
 
 

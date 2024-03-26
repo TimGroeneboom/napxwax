@@ -27,9 +27,12 @@ namespace audio
      */
     class NAPAPI TimecoderNode final : public audio::Node
     {
+        friend class TimecoderAudioObject;
         friend class TimecoderComponentInstance;
     RTTI_ENABLE(audio::Process)
     public:
+        TimecoderNode(NodeManager& nodeManager);
+
         /**
          * Constructor
          * @param nodeManager reference to nodeManager
@@ -53,11 +56,17 @@ namespace audio
          * @param sampleRate the new samplerate
          */
         void sampleRateChanged(float sampleRate) override;
+
+        /**
+         * Gets the current pitch. Thread-safe.
+         * @return current pitch
+         */
+        float getPitch();
     private:
         // TimecoderComponentInstance interface methods and members
 
         /**
-         * Sets time in seconds and pitch when the dirty flag is set, returns true if the dirty flag was set, false otherwise.
+         * Gets time in seconds and pitch when the dirty flag is set, returns true if the dirty flag was set, false otherwise.
          * @param time will be set to current time in seconds
          * @param pitch will be set to current pitch
          * @return true if the dirty flag was set, false otherwise. Given values will only be updated when dirty flag was set.
@@ -101,7 +110,7 @@ namespace audio
          * Creates a new timecoder, creation will be queued and executed in the process method.
          */
         void createTimecoder();
-        moodycamel::ConcurrentQueue<std::function<void()>> mTaskQueue;
+        moodycamel::ConcurrentQueue<std::function<void()>> mCreationQueue;
     };
 }
 }
