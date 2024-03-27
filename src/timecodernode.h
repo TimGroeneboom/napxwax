@@ -62,8 +62,6 @@ namespace audio
          * @return current pitch
          */
         float getPitch();
-    private:
-        // TimecoderComponentInstance interface methods and members
 
         /**
          * Gets time in seconds and pitch when the dirty flag is set, returns true if the dirty flag was set, false otherwise.
@@ -104,7 +102,7 @@ namespace audio
         DirtyFlag mDirty;
 
         float mReferenceSpeed = 1.0f;
-        ETimecodeContol mControl;
+        ETimecodeContol mControl = ETimecodeContol::SERATO_2A;
 
         /**
          * Creates a new timecoder, creation will be queued and executed in the process method.
