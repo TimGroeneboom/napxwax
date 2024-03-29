@@ -27,7 +27,6 @@ namespace audio
      */
     class NAPAPI TimecoderNode final : public audio::Node
     {
-        friend class TimecoderAudioObject;
         friend class TimecoderComponentInstance;
     RTTI_ENABLE(audio::Process)
     public:
@@ -58,13 +57,7 @@ namespace audio
         void sampleRateChanged(float sampleRate) override;
 
         /**
-         * Gets the current pitch. Thread-safe.
-         * @return current pitch
-         */
-        float getPitch();
-
-        /**
-         * Gets time in seconds and pitch when the dirty flag is set, returns true if the dirty flag was set, false otherwise.
+         * Sets time in seconds and pitch when the dirty flag is set, returns true if the dirty flag was set, false otherwise.
          * @param time will be set to current time in seconds
          * @param pitch will be set to current pitch
          * @return true if the dirty flag was set, false otherwise. Given values will only be updated when dirty flag was set.
@@ -83,9 +76,14 @@ namespace audio
          */
         void changeReferenceSpeed(float referenceSpeed);
 
+        float getPitch() const { return mPitch; }
+
         // these input pins are connected by the TimecoderComponentInstance init method
-        InputPin audioLeft  = {this};
-        InputPin audioRight = {this};
+        InputPin audioLeft = { this };
+        InputPin audioRight = { this };
+
+        OutputPin audioOutputRight = { this };
+        OutputPin audioOutputLeft = { this };
     private:
         /**
          * Implementation in .cpp file
@@ -101,14 +99,18 @@ namespace audio
         std::atomic<double> mPitch{0.0};
         DirtyFlag mDirty;
 
+        // accessed only from update / main thread
+        double mConsumedPitch = 0.0f;
+        double mConsumedTime = 0.0;
+
         float mReferenceSpeed = 1.0f;
-        ETimecodeContol mControl = ETimecodeContol::SERATO_2A;
+        ETimecodeContol mControl;
 
         /**
          * Creates a new timecoder, creation will be queued and executed in the process method.
          */
         void createTimecoder();
-        moodycamel::ConcurrentQueue<std::function<void()>> mCreationQueue;
+        moodycamel::ConcurrentQueue<std::function<void()>> mTaskQueue;
     };
 }
 }

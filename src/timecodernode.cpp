@@ -47,10 +47,8 @@ namespace nap
             timecoder mTimeCoder;
         };
 
-
-        TimecoderNode::TimecoderNode(NodeManager& nodeManager) : Node(nodeManager)
+        TimecoderNode::TimecoderNode(NodeManager& nodeManager) : TimecoderNode(nodeManager, 1.0f, ETimecodeContol::SERATO_CD)
         {
-            createTimecoder();
         }
 
 
@@ -64,23 +62,25 @@ namespace nap
         }
 
 
-        TimecoderNode::~TimecoderNode() = default;
+        TimecoderNode::~TimecoderNode()
+        {
+        }
 
 
         void TimecoderNode::createTimecoder()
         {
             // first dequeue any previous creation tasks, just in case
-            while(mCreationQueue.size_approx() > 0)
+            while(mTaskQueue.size_approx() > 0)
             {
                 std::function<void()> task;
-                while(mCreationQueue.try_dequeue(task)){}
+                while(mTaskQueue.try_dequeue(task)){}
             }
 
             // move the creation to the task queue
             auto control = mControl;
             int sample_rate = static_cast<int>(getNodeManager().getSampleRate());
             auto reference_speed = mReferenceSpeed;
-            mCreationQueue.enqueue([this, control, sample_rate, reference_speed]()
+            mTaskQueue.enqueue([this, control, sample_rate, reference_speed]()
             {
                 mImpl = std::make_unique<Impl>(control, reference_speed, sample_rate);
             });
@@ -90,12 +90,8 @@ namespace nap
         void TimecoderNode::process()
         {
             std::function<void()> task;
-            while(mCreationQueue.try_dequeue(task))
+            while(mTaskQueue.try_dequeue(task))
                 task();
-
-            assert(mImpl != nullptr);
-            assert(audioLeft.isConnected());
-            assert(audioRight.isConnected());
 
             mBuffers[0] = audioLeft.pull();
             mBuffers[1] = audioRight.pull();
@@ -110,24 +106,28 @@ namespace nap
             mPitch.store(timecoder_get_pitch(&mImpl->mTimeCoder));
             mTime.store(static_cast<double>(timecoder_get_position(&mImpl->mTimeCoder, &pos)) / 1000);
             mDirty.set();
-        }
 
-
-        float TimecoderNode::getPitch()
-        {
-            return mPitch.load();
+            auto& buffer_left = getOutputBuffer(audioOutputLeft);
+            auto& buffer_right = getOutputBuffer(audioOutputRight);
+            buffer_left = *mBuffers[0];
+            buffer_right = *mBuffers[1];
         }
 
 
         bool TimecoderNode::consumeTimeAndPitch(double &time, double &pitch)
         {
+            bool return_value = false;
             if(mDirty.check())
             {
-                time = mTime.load();
-                pitch = mPitch.load();
-                return true;
+                mConsumedTime = mTime.load();
+                mConsumedPitch = mPitch.load();
+                return_value = true;
             }
-            return false;
+
+            time = mConsumedTime;
+            pitch = mConsumedPitch;
+
+            return return_value;
         }
 
 

@@ -57,7 +57,7 @@ namespace nap
     {
         auto audioService = getEntityInstance()->getCore()->getService<AudioService>();
         auto& nodeManager = audioService->getNodeManager();
-        nodeManager.unregisterRootProcess(*mTimecoderNode);
+
     }
 
 
@@ -97,9 +97,7 @@ namespace nap
 
         //
         mTimecoderNode = nodeManager.makeSafe<TimecoderNode>(nodeManager, mReferenceSpeed, mControl);
-        mTimecoderNode->audioLeft.connect(*mInput->getOutputForChannel(channelRouting[0]));
-        mTimecoderNode->audioRight.connect(*mInput->getOutputForChannel(channelRouting[1]));
-        nodeManager.registerRootProcess(*mTimecoderNode);
+
         return true;
     }
 
