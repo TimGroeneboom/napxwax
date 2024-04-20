@@ -89,9 +89,12 @@ namespace nap
 
         void TimecoderNode::process()
         {
-            std::function<void()> task;
-            while(mTaskQueue.try_dequeue(task))
-                task();
+            if(mTaskQueue.size_approx()>0)
+            {
+                std::function<void()> task;
+                while(mTaskQueue.try_dequeue(task))
+                    task();
+            }
 
             mBuffers[0] = audioLeft.pull();
             mBuffers[1] = audioRight.pull();
@@ -104,7 +107,7 @@ namespace nap
             }
 
             mPitch.store(timecoder_get_pitch(&mImpl->mTimeCoder));
-            mTime.store(static_cast<double>(timecoder_get_position(&mImpl->mTimeCoder, &pos)) / 1000);
+            mTime.store(static_cast<double>(timecoder_get_position(&mImpl->mTimeCoder, &mPosition)) / 1000);
             mDirty.set();
 
             auto& buffer_left = getOutputBuffer(audioOutputLeft);

@@ -9,6 +9,9 @@ namespace nap
 {
 namespace audio
 {
+    /**
+     * Enum for the different timecode control signals
+     */
     enum NAPAPI ETimecodeContol
     {
         SERATO_2A,
@@ -23,13 +26,21 @@ namespace audio
     };
 
     /**
-     *
+     * Timecoder node performs timecode analysis on node input.
+     * Input must be stereo audio.
+     * Output just passes through the input. This allows for buffer players to be controlled by analysis of the timecoder.
+     * Use the consumeTimeAndPitch method to get the current time and pitch from the main thread
+     * Use the getPitch and getTime methods to get the current pitch and time from the audio thread
      */
     class NAPAPI TimecoderNode final : public audio::Node
     {
         friend class TimecoderComponentInstance;
     RTTI_ENABLE(audio::Process)
     public:
+        /**
+         * Constructor
+         * @param nodeManager reference to nodeManager
+         */
         TimecoderNode(NodeManager& nodeManager);
 
         /**
@@ -76,7 +87,23 @@ namespace audio
          */
         void changeReferenceSpeed(float referenceSpeed);
 
-        float getPitch() const { return mPitch; }
+        /**
+         * Returns the current pitch, should only be called from audio thread, so either a node or another process attached to the audio thread
+         * @return the current pitch
+         */
+        double getPitch() const { return mPitch; }
+
+        /**
+         * Returns the current time in seconds, should only be called from audio thread, so either a node or another process attached to the audio thread
+         * @return the current time in seconds
+         */
+        double getTime() const { return mTime; }
+
+        /**
+         * Returns the reference speed, should only be called from audio thread, so either a node or another process attached to the audio thread
+         * @return the reference speed
+         */
+        float getReferenceSpeed() const { return mReferenceSpeed; }
 
         // these input pins are connected by the TimecoderComponentInstance init method
         InputPin audioLeft = { this };
@@ -91,7 +118,8 @@ namespace audio
          */
         class Impl;
         std::unique_ptr<Impl> mImpl;
-        double pos = 0.0;
+
+        double mPosition = 0.0;
 
         short mSamples[2] = { 0, 0 };
         SampleBuffer* mBuffers[2] = {nullptr, nullptr};
