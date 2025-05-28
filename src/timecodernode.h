@@ -4,27 +4,12 @@
 #include <audio/service/audioservice.h>
 #include "audio/utility/dirtyflag.h"
 #include <concurrentqueue.h>
+#include "timecodecontroltypes.h"
 
 namespace nap
 {
 namespace audio
 {
-    /**
-     * Enum for the different timecode control signals
-     */
-    enum NAPAPI ETimecodeContol
-    {
-        SERATO_2A,
-        SERATO_2B,
-        SERATO_CD,
-        TRACTOR_A,
-        TRACTOR_B,
-        MIXVIBES_V2,
-        MIXVIBES_7INCH,
-        PIONEER_A,
-        PIONEER_B
-    };
-
     /**
      * Timecoder node performs timecode analysis on node input.
      * Input must be stereo audio.
