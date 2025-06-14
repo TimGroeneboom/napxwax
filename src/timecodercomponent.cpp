@@ -103,7 +103,8 @@ namespace nap
 
     void TimecoderComponentInstance::update(double deltaTime)
     {
-        mTimecoderNode->consumeTimeAndPitch(mTimecode, mPitch);
+        bool timecode_valid = false;
+        mTimecoderNode->consumeTimeAndPitch(mTimecode, mPitch, timecode_valid);
         mRelativeTime += mPitch * deltaTime;
     }
 

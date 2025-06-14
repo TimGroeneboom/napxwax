@@ -32,7 +32,7 @@ namespace nap
 
         static std::unordered_map<ETimecodeContol, float> timecoderOffsets =
             {
-            { ETimecodeContol::SERATO_2A,       -25.5f },
+            { ETimecodeContol::SERATO_2A,       -24.0f },
                 { ETimecodeContol::SERATO_2B,       0.0f },
                 { ETimecodeContol::SERATO_CD,       0.0f },
                 { ETimecodeContol::TRACTOR_A,       0.0f },
@@ -120,8 +120,9 @@ namespace nap
             }
 
             mPitch.store(timecoder_get_pitch(&mImpl->mTimeCoder));
-            mTime.store((static_cast<double>(timecoder_get_position(&mImpl->mTimeCoder, &mPosition)) / 1000)
-                + timecoderOffsets[mControl]);
+            int position = timecoder_get_position(&mImpl->mTimeCoder, &mPosition);
+            mCurrentTimecodeValid.store(position >= 0);
+            mTime.store(static_cast<double>(position) / 1000 + timecoderOffsets[mControl]);
             mDirty.set();
 
             auto& buffer_left = getOutputBuffer(audioOutputLeft);
@@ -131,18 +132,20 @@ namespace nap
         }
 
 
-        bool TimecoderNode::consumeTimeAndPitch(double &time, double &pitch)
+        bool TimecoderNode::consumeTimeAndPitch(double &time, double &pitch, bool &timecodeValid)
         {
             bool return_value = false;
             if(mDirty.check())
             {
                 mConsumedTime = mTime.load();
                 mConsumedPitch = mPitch.load();
+                mConsumedTimecodeValid = mCurrentTimecodeValid.load();
                 return_value = true;
             }
 
             time = mConsumedTime;
             pitch = mConsumedPitch;
+            timecodeValid = mConsumedTimecodeValid;
 
             return return_value;
         }

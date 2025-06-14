@@ -58,7 +58,7 @@ namespace audio
          * @param pitch will be set to current pitch
          * @return true if the dirty flag was set, false otherwise. Given values will only be updated when dirty flag was set.
          */
-        bool consumeTimeAndPitch(double &time, double &pitch);
+        bool consumeTimeAndPitch(double &time, double &pitch, bool &timecodeValid);
 
         /**
          * Change control, re-initializes the timecoder.
@@ -90,6 +90,8 @@ namespace audio
          */
         float getReferenceSpeed() const { return mReferenceSpeed; }
 
+        bool getCurrentTimecodeValid() const { return mCurrentTimecodeValid; }
+
         // these input pins are connected by the TimecoderComponentInstance init method
         InputPin audioLeft = { this };
         InputPin audioRight = { this };
@@ -110,11 +112,13 @@ namespace audio
         SampleBuffer* mBuffers[2] = {nullptr, nullptr};
         std::atomic<double> mTime{0.0};
         std::atomic<double> mPitch{0.0};
+        std::atomic_bool mCurrentTimecodeValid{false};
         DirtyFlag mDirty;
 
         // accessed only from update / main thread
         double mConsumedPitch = 0.0f;
         double mConsumedTime = 0.0;
+        bool mConsumedTimecodeValid = false;
 
         float mReferenceSpeed = 1.0f;
         ETimecodeContol mControl;
