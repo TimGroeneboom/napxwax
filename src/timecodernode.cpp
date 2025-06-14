@@ -30,6 +30,19 @@ namespace nap
             { ETimecodeContol::PIONEER_B,       "pioneer_b"     }
         };
 
+        static std::unordered_map<ETimecodeContol, float> timecoderOffsets =
+            {
+            { ETimecodeContol::SERATO_2A,       0.0f },
+                { ETimecodeContol::SERATO_2B,       -30.0f },
+                { ETimecodeContol::SERATO_CD,       0.0f },
+                { ETimecodeContol::TRACTOR_A,       0.0f },
+                { ETimecodeContol::TRACTOR_B,       0.0f },
+                { ETimecodeContol::MIXVIBES_V2,     0.0f },
+                { ETimecodeContol::MIXVIBES_7INCH,  0.0f },
+                { ETimecodeContol::PIONEER_A,       0.0f },
+                { ETimecodeContol::PIONEER_B,       0.0f }
+            };
+
 
         class TimecoderNode::Impl
         {
@@ -107,7 +120,8 @@ namespace nap
             }
 
             mPitch.store(timecoder_get_pitch(&mImpl->mTimeCoder));
-            mTime.store(static_cast<double>(timecoder_get_position(&mImpl->mTimeCoder, &mPosition)) / 1000);
+            mTime.store((static_cast<double>(timecoder_get_position(&mImpl->mTimeCoder, &mPosition)) / 1000)
+                + timecoderOffsets[mControl]);
             mDirty.set();
 
             auto& buffer_left = getOutputBuffer(audioOutputLeft);
