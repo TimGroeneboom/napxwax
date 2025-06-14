@@ -32,7 +32,7 @@ namespace nap
 
         static std::unordered_map<ETimecodeContol, float> timecoderOffsets =
             {
-            { ETimecodeContol::SERATO_2A,       -28.0f },
+            { ETimecodeContol::SERATO_2A,       -25.5f },
                 { ETimecodeContol::SERATO_2B,       0.0f },
                 { ETimecodeContol::SERATO_CD,       0.0f },
                 { ETimecodeContol::TRACTOR_A,       0.0f },
