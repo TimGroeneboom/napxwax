@@ -125,7 +125,7 @@ namespace nap
             mCurrentTimecodeValid.store(valid);
             if (valid)
             {
-                auto position = static_cast<unsigned int>(mPosition);
+                auto position = static_cast<unsigned int>(result);
                 mTime.store(static_cast<double>(position) / 1000 + timecoderOffsets[mControl]);
             }
             mDirty.set();
