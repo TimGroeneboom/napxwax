@@ -120,9 +120,9 @@ namespace nap
             }
 
             mPitch.store(timecoder_get_pitch(&mImpl->mTimeCoder));
-            int position = timecoder_get_position(&mImpl->mTimeCoder, &mPosition);
-            mCurrentTimecodeValid.store(position >= 0);
-            mTime.store(static_cast<double>(position) / 1000 + timecoderOffsets[mControl]);
+            int result = timecoder_get_position(&mImpl->mTimeCoder, &mPosition);
+            mCurrentTimecodeValid.store(result != -1);
+            mTime.store(mPosition + timecoderOffsets[mControl]);
             mDirty.set();
 
             auto& buffer_left = getOutputBuffer(audioOutputLeft);
