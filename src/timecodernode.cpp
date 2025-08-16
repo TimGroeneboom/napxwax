@@ -127,8 +127,8 @@ namespace nap
 
             auto& buffer_left = getOutputBuffer(audioOutputLeft);
             auto& buffer_right = getOutputBuffer(audioOutputRight);
-            buffer_left = *mBuffers[0];
-            buffer_right = *mBuffers[1];
+            buffer_right = *mBuffers[0];
+            buffer_left = *mBuffers[1];
         }
 
 
