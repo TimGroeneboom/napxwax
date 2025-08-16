@@ -109,8 +109,8 @@ namespace nap
                     task();
             }
 
-            mBuffers[0] = audioLeft.pull();
-            mBuffers[1] = audioRight.pull();
+            mBuffers[0] = audioRight.pull();
+            mBuffers[1] = audioLeft.pull();
 
             for (auto s = 0; s < getBufferSize(); ++s)
             {
