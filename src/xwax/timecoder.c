@@ -35,7 +35,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef __linux__
 #include <unistd.h>
+#endif // __linux__
 
 #include "debug.h"
 #include "timecoder.h"
