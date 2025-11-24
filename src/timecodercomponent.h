@@ -4,18 +4,19 @@
 
 #pragma once
 
+ // Local includes
+#include "timecodernode.h"
+
 // Nap includes
 #include <nap/resourceptr.h>
-#include <audio/utility/safeptr.h>
+#include <nap/timer.h>
 
 // Audio includes
+#include <audio/utility/safeptr.h>
 #include <audio/component/audiocomponentbase.h>
 #include <audio/resource/audiobufferresource.h>
 #include <audio/node/inputnode.h>
 #include <audio/node/gainnode.h>
-
-#include "timecodernode.h"
-#include "nap/timer.h"
 
 namespace nap
 {

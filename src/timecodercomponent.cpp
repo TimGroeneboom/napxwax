@@ -12,18 +12,6 @@
 #include <unordered_set>
 #include <mathutils.h>
 
-RTTI_BEGIN_ENUM(nap::audio::ETimecodeContol)
-	RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::SERATO_2A, "serato_2a"),
-	RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::SERATO_2B, "serato_2b"),
-	RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::SERATO_CD, "serato_cd"),
-	RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::TRACTOR_A, "traktor_a"),
-	RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::TRACTOR_B, "traktor_b"),
-	RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::MIXVIBES_V2, "mixvibes_v2"),
-	RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::MIXVIBES_7INCH, "mixvibes_7inch"),
-	RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::PIONEER_A, "pioneer_a"),
-	RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::PIONEER_B, "pioneer_b")
-RTTI_END_ENUM
-
 RTTI_BEGIN_CLASS(nap::audio::TimecoderComponent)
         RTTI_PROPERTY("Input",				&nap::audio::TimecoderComponent::mInput,			nap::rtti::EPropertyMetaData::Required)
         RTTI_PROPERTY("ChannelRouting",		&nap::audio::TimecoderComponent::mChannelRouting,	nap::rtti::EPropertyMetaData::Default)
@@ -167,7 +155,7 @@ namespace nap
 
 	void audio::TimecoderComponentInstance::setMode(ETimecodeMode mode)
 	{
-		switch (mMode)
+		switch (mode)
 		{
 			case ETimecodeMode::DVS:
 			{
@@ -187,5 +175,6 @@ namespace nap
 				break;
 			}
 		}
+		mMode = mode;
 	}
 }
