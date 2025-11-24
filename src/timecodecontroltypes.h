@@ -9,9 +9,9 @@ namespace nap
         /**
          * Enum for the different timecode control signals
          */
-        enum NAPAPI ETimecodeContol
+        enum NAPAPI ETimecodeContol : uint8
         {
-            SERATO_2A,
+            SERATO_2A		= 0,
             SERATO_2B,
             SERATO_CD,
             TRACTOR_A,
@@ -21,5 +21,14 @@ namespace nap
             PIONEER_A,
             PIONEER_B
         };
+
+		/**
+		 * Enum for the different modes
+		 */
+		enum NAPAPI ETimecodeMode : uint8
+		{
+			PassThrough		= 0,			///< Signal pass-through
+			DVS								///< Signal as DVS
+		};
     }
 }

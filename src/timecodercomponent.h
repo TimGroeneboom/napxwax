@@ -30,10 +30,11 @@ namespace nap
         DECLARE_COMPONENT(TimecoderComponent, TimecoderComponentInstance)
         public:
             // Properties
-            nap::ComponentPtr<audio::AudioComponentBase> mInput; ///< property: 'Input' The component whose audio output will be send
-            std::vector<int> mChannelRouting; ///< property: 'ChannelRouting' The component whose audio output will be send
-            float mReferenceSpeed = 1.0f; ///< Property: 'ReferenceSpeed' The reference speed of the timecoder
-            ETimecodeContol mControl = ETimecodeContol::SERATO_2A; ///< Property: 'Control' The control mode of the timecoder
+            nap::ComponentPtr<audio::AudioComponentBase> mInput;	///< property: 'Input' The component whose audio output will be send
+            std::vector<int> mChannelRouting;						///< property: 'ChannelRouting' The component whose audio output will be send
+            float mReferenceSpeed = 1.0f;							///< Property: 'ReferenceSpeed' The reference speed of the timecoder
+            ETimecodeContol mControl = ETimecodeContol::SERATO_2A;	///< Property: 'Control' The vinyl control mode of the timecoder
+			ETimecodeMode mMode = ETimecodeMode::DVS;				///< Property: 'Mode' The DVS interpretation mode by this component
 
             /**
              * Returns true if instance is set
@@ -46,9 +47,11 @@ namespace nap
              * @return reference to instance
              */
             TimecoderComponentInstance& getInstance() const;
+
         private:
             TimecoderComponentInstance* mInstance = nullptr;
         };
+
 
         class NAPAPI TimecoderComponentInstance final : public AudioComponentBaseInstance
         {
@@ -82,14 +85,14 @@ namespace nap
              * Returns amount of channels
              * @return amount of channels
              */
-            int getChannelCount() const override { return mInput->getChannelCount(); }
+            int getChannelCount() const override { return 2; }
 
             /**
              * Returns output pin for given channel, no bound checking, assert on out of bound
              * @param channel the channel
              * @return OutputPin for channel
              */
-            OutputPin* getOutputForChannel(int channel) override { return mInput->getOutputForChannel(channel); }
+			OutputPin* getOutputForChannel(int channel) override;
 
             /**
              * Updates the time and pitch with current timecode and pitch computed by TimecoderNode
@@ -155,6 +158,8 @@ namespace nap
             double mRelativeTime = 0.0;
             float mReferenceSpeed = 1.0f;
             ETimecodeContol mControl = ETimecodeContol::SERATO_2A;
+			ETimecodeMode mMode = ETimecodeMode::DVS;
+			std::vector<int> mChannelRouting;
         };
     }
 }

@@ -9,6 +9,7 @@
 #include <entity.h>
 #include <audio/service/audioservice.h>
 #include <audio/node/outputnode.h>
+#include <unordered_set>
 
 RTTI_BEGIN_ENUM(nap::audio::ETimecodeContol)
 RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::SERATO_2A, "serato_2a"),
@@ -63,43 +64,56 @@ namespace nap
 
     bool TimecoderComponentInstance::init(utility::ErrorState& errorState)
     {
+		// Ensure input is at least stereo
+		auto* resource = getComponent<TimecoderComponent>();
+		if (!errorState.check(mInput->getChannelCount() >= 2,
+			"Input must be stereo and have 2 channels, got %d instead", mInput->getChannelCount()))
+			return false;
+
+		// Copy required routing, stereo if none provided
+		mChannelRouting = resource->mChannelRouting.empty() ?
+			std::vector<int>({0,1}) : resource->mChannelRouting;
+
+		// Ensure routing is stereo
+		if (!errorState.check(mChannelRouting.size() == 2,
+			"Invalid routing, must be stereo and have 2 channels, got %d instead", mChannelRouting.size()))
+			return false;
+
+		// Ensure routing is valid, either 0-1 or 1-0
+		std::unordered_set<int> unique(2);
+		for (const auto& channel : mChannelRouting)
+		{
+			if (!errorState.check(unique.find(channel) == unique.end(),
+				"Duplicate channel assignment, %d", channel))
+				return false;
+
+			if (!errorState.check(channel < mInput->getChannelCount(),
+				"Channel %d exceeds input channel count of %d", channel, mInput->getChannelCount()))
+				return false;
+
+			unique.emplace(channel);
+		}
+
         // acquire audio service and node manager
-        auto audioService = getEntityInstance()->getCore()->getService<AudioService>();
-        auto& nodeManager = audioService->getNodeManager();
+        auto audio_service = getEntityInstance()->getCore()->getService<AudioService>();
+        auto& node_manager = audio_service->getNodeManager();
 
         // acquire resources
-        auto* resource = getComponent<TimecoderComponent>();
-        resource->mInstance = this;
-        auto& channelRouting = resource->mChannelRouting;
         mControl = resource->mControl;
+		mMode = resource->mMode;
         mReferenceSpeed = resource->mReferenceSpeed;
 
-        if(!errorState.check(mInput->getChannelCount() == 2, "%s: Input must have 2 channels.", resource->mID.c_str()))
-            return false;
+        // Create xwax time decode node
+        mTimecoderNode = node_manager.makeSafe<TimecoderNode>(node_manager, mReferenceSpeed, mControl);
 
-        if(!errorState.check(channelRouting.size() == 2, "%s: Channel routing must have 2 channels.", resource->mID.c_str()))
-            return false;
+		// Connect inputs
+		mTimecoderNode->audioLeft.connect(*mInput->getOutputForChannel(mChannelRouting[0]));
+		mTimecoderNode->audioRight.connect(*mInput->getOutputForChannel(mChannelRouting[1]));
 
-        // configure channel routing
-        if (channelRouting.empty())
-        {
-            for (auto channel = 0; channel < mInput->getChannelCount(); ++channel)
-                channelRouting.emplace_back(channel);
-        }
-        for (auto channel = 0; channel < channelRouting.size(); ++channel)
-        {
-            if (channelRouting[channel] >= mInput->getChannelCount())
-            {
-                errorState.fail("%s: Trying to route input channel that is out of bounds.", resource->mID.c_str());
-                return false;
-            }
-        }
-
-        //
-        mTimecoderNode = nodeManager.makeSafe<TimecoderNode>(nodeManager, mReferenceSpeed, mControl);
 
         return true;
     }
+
 
     void TimecoderComponentInstance::update(double deltaTime)
     {
@@ -126,4 +140,13 @@ namespace nap
             mTimecoderNode->changeReferenceSpeed(mReferenceSpeed);
         }
     }
+
+
+	nap::audio::OutputPin* audio::TimecoderComponentInstance::getOutputForChannel(int channel)
+	{
+		assert(channel < mChannelRouting.size());
+		return channel == 0 ?
+			&mTimecoderNode->audioOutputLeft :
+			&mTimecoderNode->audioOutputRight;
+	}
 }
