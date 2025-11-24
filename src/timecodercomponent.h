@@ -57,15 +57,10 @@ namespace nap
         {
         RTTI_ENABLE(AudioComponentBaseInstance)
         public:
-            /**
-             * Constructor
-             * @param entity entity
-             * @param resource resource
-             */
+
             TimecoderComponentInstance(EntityInstance& entity, Component& resource)
-                : AudioComponentBaseInstance(entity, resource)
-            {
-            }
+                : AudioComponentBaseInstance(entity, resource) { }
+
             ~TimecoderComponentInstance() override;
 
             /**
