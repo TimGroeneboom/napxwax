@@ -12,6 +12,7 @@
 #include <audio/component/audiocomponentbase.h>
 #include <audio/resource/audiobufferresource.h>
 #include <audio/node/inputnode.h>
+#include <audio/node/gainnode.h>
 
 #include "timecodernode.h"
 #include "nap/timer.h"
@@ -126,11 +127,17 @@ namespace nap
              */
             void setControl(ETimecodeContol control);
 
+			/**
+			 * Sets the mode to use, passthrough or DVS
+			 * When the mode is set to DVS the output gain is set to 0
+			 */
+			void setMode(ETimecodeMode mode);
+
             /**
              * Returns current control mode
              * @return current control mode
              */
-            ETimecodeContol getControl() const { return mControl; }
+            ETimecodeContol getControl() const { return mTimecoderNode->getControl(); }
 
             /**
              * Sets the reference speed of the timecoder, 1.0 is 33 1/3, 1.35 is 45 rpm
@@ -142,11 +149,12 @@ namespace nap
              * Returns the reference speed of the timecoder
              * @return the reference speed of the timecoder
              */
-            float getReferenceSpeed() const { return mReferenceSpeed; }
+            float getReferenceSpeed() const { return mTimecoderNode->getReferenceSpeed(); }
 
         private:
             ComponentInstancePtr<audio::AudioComponentBase> mInput	= { this, &TimecoderComponent::mInput };
             audio::SafeOwner<audio::TimecoderNode> mTimecoderNode = nullptr;
+			std::array<audio::SafeOwner<audio::GainNode>, 2> mGainNodes = { nullptr };
 
             double mPitch = 0.0;
             double mTimecode = 0.0;
@@ -155,6 +163,8 @@ namespace nap
             ETimecodeContol mControl = ETimecodeContol::SERATO_2A;
 			ETimecodeMode mMode = ETimecodeMode::DVS;
 			std::vector<int> mChannelRouting;
+
+			void createGraph();
         };
     }
 }

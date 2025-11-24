@@ -10,24 +10,26 @@
 #include <audio/service/audioservice.h>
 #include <audio/node/outputnode.h>
 #include <unordered_set>
+#include <mathutils.h>
 
 RTTI_BEGIN_ENUM(nap::audio::ETimecodeContol)
-RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::SERATO_2A, "serato_2a"),
-RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::SERATO_2B, "serato_2b"),
-RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::SERATO_CD, "serato_cd"),
-RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::TRACTOR_A, "traktor_a"),
-RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::TRACTOR_B, "traktor_b"),
-RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::MIXVIBES_V2, "mixvibes_v2"),
-RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::MIXVIBES_7INCH, "mixvibes_7inch"),
-RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::PIONEER_A, "pioneer_a"),
-RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::PIONEER_B, "pioneer_b")
+	RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::SERATO_2A, "serato_2a"),
+	RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::SERATO_2B, "serato_2b"),
+	RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::SERATO_CD, "serato_cd"),
+	RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::TRACTOR_A, "traktor_a"),
+	RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::TRACTOR_B, "traktor_b"),
+	RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::MIXVIBES_V2, "mixvibes_v2"),
+	RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::MIXVIBES_7INCH, "mixvibes_7inch"),
+	RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::PIONEER_A, "pioneer_a"),
+	RTTI_ENUM_VALUE(nap::audio::ETimecodeContol::PIONEER_B, "pioneer_b")
 RTTI_END_ENUM
 
 RTTI_BEGIN_CLASS(nap::audio::TimecoderComponent)
-        RTTI_PROPERTY("Input", &nap::audio::TimecoderComponent::mInput, nap::rtti::EPropertyMetaData::Required)
-        RTTI_PROPERTY("ChannelRouting", &nap::audio::TimecoderComponent::mChannelRouting, nap::rtti::EPropertyMetaData::Default)
-        RTTI_PROPERTY("Control", &nap::audio::TimecoderComponent::mControl, nap::rtti::EPropertyMetaData::Default)
-        RTTI_PROPERTY("ReferenceSpeed", &nap::audio::TimecoderComponent::mReferenceSpeed, nap::rtti::EPropertyMetaData::Default)
+        RTTI_PROPERTY("Input",				&nap::audio::TimecoderComponent::mInput,			nap::rtti::EPropertyMetaData::Required)
+        RTTI_PROPERTY("ChannelRouting",		&nap::audio::TimecoderComponent::mChannelRouting,	nap::rtti::EPropertyMetaData::Default)
+        RTTI_PROPERTY("Control",			&nap::audio::TimecoderComponent::mControl,			nap::rtti::EPropertyMetaData::Default)
+		RTTI_PROPERTY("Mode",				&nap::audio::TimecoderComponent::mMode,				nap::rtti::EPropertyMetaData::Default)
+        RTTI_PROPERTY("ReferenceSpeed",		&nap::audio::TimecoderComponent::mReferenceSpeed,	nap::rtti::EPropertyMetaData::Default)
 RTTI_END_CLASS
 
 RTTI_BEGIN_CLASS_NO_DEFAULT_CONSTRUCTOR(nap::audio::TimecoderComponentInstance)
@@ -42,6 +44,7 @@ namespace nap
     {
         return mInstance != nullptr;
     }
+
 
     TimecoderComponentInstance& TimecoderComponent::getInstance() const
     {
@@ -94,25 +97,45 @@ namespace nap
 			unique.emplace(channel);
 		}
 
-        // acquire audio service and node manager
-        auto audio_service = getEntityInstance()->getCore()->getService<AudioService>();
-        auto& node_manager = audio_service->getNodeManager();
+		// Create DSP
+		createGraph();
 
-        // acquire resources
-        mControl = resource->mControl;
-		mMode = resource->mMode;
-        mReferenceSpeed = resource->mReferenceSpeed;
-
-        // Create xwax time decode node
-        mTimecoderNode = node_manager.makeSafe<TimecoderNode>(node_manager, mReferenceSpeed, mControl);
-
-		// Connect inputs
-		mTimecoderNode->audioLeft.connect(*mInput->getOutputForChannel(mChannelRouting[0]));
-		mTimecoderNode->audioRight.connect(*mInput->getOutputForChannel(mChannelRouting[1]));
-
+		// Initialize
+		setMode(resource->mMode);
+		setControl(resource->mControl);
+		setReferenceSpeed(resource->mReferenceSpeed);
 
         return true;
     }
+
+
+	void audio::TimecoderComponentInstance::createGraph()
+	{
+		// acquire audio service and node manager
+		auto audio_service = getEntityInstance()->getCore()->getService<AudioService>();
+		auto& node_manager = audio_service->getNodeManager();
+
+		// Create xwax time decode node
+		mTimecoderNode = node_manager.makeSafe<TimecoderNode>(node_manager, mReferenceSpeed, mControl);
+
+		// Connect xwax to audio input
+		assert(mChannelRouting.size() == 2);
+		mTimecoderNode->audioLeft.connect(*mInput->getOutputForChannel(mChannelRouting[0]));
+		mTimecoderNode->audioRight.connect(*mInput->getOutputForChannel(mChannelRouting[1]));
+
+		// Create gain for each xwax output and connect
+		for (auto i = 0; i < mChannelRouting.size(); i++)
+		{
+			// Create gain node and connect input
+			auto gain = node_manager.makeSafe<GainNode>(node_manager);
+			gain->audioInput.connect(i == 0 ?
+				mTimecoderNode->audioOutputLeft :
+				mTimecoderNode->audioOutputRight);
+
+			// Store
+			mGainNodes[i] = std::move(gain);
+		}
+	}
 
 
     void TimecoderComponentInstance::update(double deltaTime)
@@ -122,31 +145,47 @@ namespace nap
         mRelativeTime += mPitch * deltaTime;
     }
 
+
     void TimecoderComponentInstance::setControl(ETimecodeContol control)
     {
-        if(mControl != control)
-        {
-            mControl = control;
-            mTimecoderNode->changeControl(mControl);
-        }
-    }
+		mTimecoderNode->changeControl(control);
+	}
 
 
     void TimecoderComponentInstance::setReferenceSpeed(float referenceSpeed)
     {
-        if(mReferenceSpeed != referenceSpeed)
-        {
-            mReferenceSpeed = referenceSpeed;
-            mTimecoderNode->changeReferenceSpeed(mReferenceSpeed);
-        }
+		mTimecoderNode->changeReferenceSpeed(mReferenceSpeed);
     }
 
 
 	nap::audio::OutputPin* audio::TimecoderComponentInstance::getOutputForChannel(int channel)
 	{
 		assert(channel < mChannelRouting.size());
-		return channel == 0 ?
-			&mTimecoderNode->audioOutputLeft :
-			&mTimecoderNode->audioOutputRight;
+		return &mGainNodes[channel]->audioOutput;
+	}
+
+
+	void audio::TimecoderComponentInstance::setMode(ETimecodeMode mode)
+	{
+		switch (mMode)
+		{
+			case ETimecodeMode::DVS:
+			{
+				mGainNodes[0]->setGain(0.0f, 1);
+				mGainNodes[1]->setGain(0.0f, 1);
+				break;
+			}
+			case ETimecodeMode::PassThrough:
+			{
+				mGainNodes[0]->setGain(1.0f, 1);
+				mGainNodes[1]->setGain(1.0f, 1);
+				break;
+			}
+			default:
+			{
+				assert(false);
+				break;
+			}
+		}
 	}
 }

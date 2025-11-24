@@ -6,6 +6,7 @@
 #include <audio/core/audionode.h>
 #include <audio/core/audionodemanager.h>
 #include <audio/core/audiopin.h>
+#include <mathutils.h>
 
 #include "timecoder_wrapper.h"
 #include "nap/logger.h"
@@ -30,18 +31,19 @@ namespace nap
             { ETimecodeContol::PIONEER_B,       "pioneer_b"     }
         };
 
+
         static std::unordered_map<ETimecodeContol, float> timecoderOffsets =
-            {
-            { ETimecodeContol::SERATO_2A,       -24.0f },
-                { ETimecodeContol::SERATO_2B,       0.0f },
-                { ETimecodeContol::SERATO_CD,       0.0f },
-                { ETimecodeContol::TRACTOR_A,       0.0f },
-                { ETimecodeContol::TRACTOR_B,       0.0f },
-                { ETimecodeContol::MIXVIBES_V2,     0.0f },
-                { ETimecodeContol::MIXVIBES_7INCH,  0.0f },
-                { ETimecodeContol::PIONEER_A,       0.0f },
-                { ETimecodeContol::PIONEER_B,       0.0f }
-            };
+        {
+			{ ETimecodeContol::SERATO_2A,       -24.0f },
+            { ETimecodeContol::SERATO_2B,       0.0f },
+            { ETimecodeContol::SERATO_CD,       0.0f },
+            { ETimecodeContol::TRACTOR_A,       0.0f },
+            { ETimecodeContol::TRACTOR_B,       0.0f },
+            { ETimecodeContol::MIXVIBES_V2,     0.0f },
+            { ETimecodeContol::MIXVIBES_7INCH,  0.0f },
+            { ETimecodeContol::PIONEER_A,       0.0f },
+            { ETimecodeContol::PIONEER_B,       0.0f }
+        };
 
 
         class TimecoderNode::Impl
@@ -60,14 +62,13 @@ namespace nap
             timecoder mTimeCoder;
         };
 
+
         TimecoderNode::TimecoderNode(NodeManager& nodeManager) : TimecoderNode(nodeManager, 1.0f, ETimecodeContol::SERATO_CD)
-        {
-        }
+        { }
 
 
-        TimecoderNode::TimecoderNode(NodeManager& nodeManager,
-                                     float referenceSpeed,
-                                     ETimecodeContol control) : Node(nodeManager)
+
+        TimecoderNode::TimecoderNode(NodeManager& nodeManager, float referenceSpeed, ETimecodeContol control) : Node(nodeManager)
         {
             mReferenceSpeed = referenceSpeed;
             mControl = control;
@@ -75,8 +76,7 @@ namespace nap
         }
 
 
-        TimecoderNode::~TimecoderNode()
-        {
+        TimecoderNode::~TimecoderNode() {
         }
 
 
@@ -168,11 +168,11 @@ namespace nap
 
         void TimecoderNode::changeReferenceSpeed(float referenceSpeed)
         {
-            if(mReferenceSpeed != referenceSpeed)
-            {
-                mReferenceSpeed = referenceSpeed;
-                createTimecoder();
-            }
+			if (!math::equal(referenceSpeed, mReferenceSpeed))
+			{
+				mReferenceSpeed = referenceSpeed;
+				createTimecoder();
+			}
         }
 
 
