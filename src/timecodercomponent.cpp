@@ -102,8 +102,8 @@ namespace nap
 
 		// Connect xwax to audio input
 		assert(mChannelRouting.size() == 2);
-		mTimecoderNode->audioLeft.connect(*mInput->getOutputForChannel(mChannelRouting[0]));
-		mTimecoderNode->audioRight.connect(*mInput->getOutputForChannel(mChannelRouting[1]));
+		mTimecoderNode->audioInputLeft.connect(*mInput->getOutputForChannel(mChannelRouting[0]));
+		mTimecoderNode->audioInputRight.connect(*mInput->getOutputForChannel(mChannelRouting[1]));
 
 		// Create gain for each xwax output and connect
 		for (auto i = 0; i < mChannelRouting.size(); i++)

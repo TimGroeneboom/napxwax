@@ -102,8 +102,8 @@ namespace nap
 	        bool getCurrentTimecodeValid() const { return mCurrentTimecodeValid; }
 	
 	        // these input pins are connected by the TimecoderComponentInstance init method
-	        InputPin audioLeft = { this };
-	        InputPin audioRight = { this };
+	        InputPin audioInputLeft = { this };
+	        InputPin audioInputRight = { this };
 	
 	        OutputPin audioOutputRight = { this };
 	        OutputPin audioOutputLeft = { this };
