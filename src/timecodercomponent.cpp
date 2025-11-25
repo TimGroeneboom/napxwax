@@ -61,14 +61,10 @@ namespace nap
 			"Input must be stereo and have 2 channels, got %d instead", mInput->getChannelCount()))
 			return false;
 
-		// Copy required routing, stereo if none provided
-		mChannelRouting = resource->mChannelRouting.empty() ?
-			std::vector<int>({0,1}) : resource->mChannelRouting;
-
-		// Ensure routing is stereo
-		if (!errorState.check(mChannelRouting.size() == 2,
-			"Invalid routing, must be stereo and have 2 channels, got %d instead", mChannelRouting.size()))
-			return false;
+		// Copy resources
+		mChannelRouting = resource->mChannelRouting;
+		mControl = resource->mControl;
+		mReferenceSpeed = resource->mReferenceSpeed;
 
 		// Ensure routing is valid, either 0-1 or 1-0
 		std::unordered_set<int> unique(2);
@@ -88,10 +84,8 @@ namespace nap
 		// Create DSP
 		createGraph();
 
-		// Initialize
+		// Initialize mode
 		setMode(resource->mMode);
-		setControl(resource->mControl);
-		setReferenceSpeed(resource->mReferenceSpeed);
 
         return true;
     }
@@ -176,5 +170,19 @@ namespace nap
 			}
 		}
 		mMode = mode;
+	}
+
+
+	nap::audio::ETimecodeContol audio::TimecoderComponentInstance::getControl() const
+	{
+		assert(mTimecoderNode != nullptr);
+		return mTimecoderNode->getControl();
+	}
+
+
+	float audio::TimecoderComponentInstance::getReferenceSpeed() const
+	{
+		assert(mTimecoderNode != nullptr);
+		return mTimecoderNode->getReferenceSpeed();
 	}
 }

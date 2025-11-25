@@ -33,7 +33,7 @@ namespace nap
         public:
             // Properties
             nap::ComponentPtr<audio::AudioComponentBase> mInput;	///< property: 'Input' The component whose audio output will be send
-            std::vector<int> mChannelRouting;						///< property: 'ChannelRouting' The component whose audio output will be send
+			std::array<int, 2> mChannelRouting = { 0,1 };			///< property: 'ChannelRouting' Stereo input routing
             float mReferenceSpeed = 1.0f;							///< Property: 'ReferenceSpeed' The reference speed of the timecoder
             ETimecodeContol mControl = ETimecodeContol::SERATO_2A;	///< Property: 'Control' The vinyl control mode of the timecoder
 			ETimecodeMode mMode = ETimecodeMode::DVS;				///< Property: 'Mode' The DVS interpretation mode by this component
@@ -114,7 +114,7 @@ namespace nap
              * Returns the pitch computed by the TimecoderNode
              * @return pitch
              */
-            double getPitch() const{ return mPitch; }
+            double getPitch() const	{ return mPitch; }
 
             /**
              * Returns the absolute timecode in seconds computed by the TimecoderNode, will be -1.0 if no timecode is available or invalid
@@ -138,7 +138,7 @@ namespace nap
              * Returns current control mode
              * @return current control mode
              */
-            ETimecodeContol getControl() const { return mTimecoderNode->getControl(); }
+            ETimecodeContol getControl() const;
 
             /**
              * Sets the reference speed of the timecoder, 1.0 is 33 1/3, 1.35 is 45 rpm
@@ -150,7 +150,7 @@ namespace nap
              * Returns the reference speed of the timecoder
              * @return the reference speed of the timecoder
              */
-            float getReferenceSpeed() const { return mTimecoderNode->getReferenceSpeed(); }
+            float getReferenceSpeed() const;
 
         private:
             ComponentInstancePtr<audio::AudioComponentBase> mInput	= { this, &TimecoderComponent::mInput };
@@ -163,7 +163,7 @@ namespace nap
             float mReferenceSpeed = 1.0f;
             ETimecodeContol mControl = ETimecodeContol::SERATO_2A;
 			ETimecodeMode mMode = ETimecodeMode::DVS;
-			std::vector<int> mChannelRouting;
+			std::array<int, 2> mChannelRouting = { 0,1 };
 
 			void createGraph();
         };

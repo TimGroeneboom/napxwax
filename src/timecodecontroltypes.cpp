@@ -17,3 +17,9 @@ RTTI_BEGIN_ENUM(nap::audio::ETimecodeMode)
 	RTTI_ENUM_VALUE(nap::audio::ETimecodeMode::PassThrough, "PassThrough")
 RTTI_END_ENUM
 
+RTTI_BEGIN_ENUM(nap::audio::ETimeCodeSpeed)
+	RTTI_ENUM_VALUE(nap::audio::ETimeCodeSpeed::RPM33, "33 RPM"),
+	RTTI_ENUM_VALUE(nap::audio::ETimeCodeSpeed::RPM45, "45 RPM"),
+	RTTI_ENUM_VALUE(nap::audio::ETimeCodeSpeed::RPM78, "78 RPM")
+RTTI_END_ENUM
+

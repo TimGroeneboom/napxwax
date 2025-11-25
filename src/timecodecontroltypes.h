@@ -30,5 +30,34 @@ namespace nap
 			PassThrough		= 0,			///< Signal pass-through
 			DVS								///< Signal as DVS
 		};
+
+		/**
+		 * RPM enum
+		 */
+		enum NAPAPI ETimeCodeSpeed : uint8
+		{
+			RPM33 = 0,
+			RPM45 = 1,
+			RPM78 = 2
+		};
+
+		/**
+		 * @return reference speed for RPM
+		 */
+		static constexpr float getReferenceSpeed(ETimeCodeSpeed speed)
+		{
+			switch (speed)
+			{
+			case RPM33:
+				return 1.0f;
+			case RPM45:
+				return 45 / 33.33f;
+			case RPM78:
+				return 78 / 33.33f;
+			default:
+				assert(false);
+				return 1.0f;
+			}
+		}
     }
 }
