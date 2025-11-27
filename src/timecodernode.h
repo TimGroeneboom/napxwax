@@ -95,6 +95,12 @@ namespace nap
 	         * @return the current time in seconds
 	         */
 	        double getTime() const { return mTime; }
+
+			/**
+			 * Returns the current absolute time in seconds
+			 * @return the current absolute time in seconds
+			 */
+			double getAbsoluteTime() const { return mTime / double(mReferenceSpeed); }
 	
 			/**
 			 * @return if current time code is valid
