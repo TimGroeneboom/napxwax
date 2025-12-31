@@ -32,8 +32,8 @@ namespace nap
 
         static std::unordered_map<ETimecodeContol, float> timecoderOffsets =
             {
-            { ETimecodeContol::SERATO_2A,       -24.0f },
-                { ETimecodeContol::SERATO_2B,       0.0f },
+            { ETimecodeContol::SERATO_2A,       -28.0f },
+                { ETimecodeContol::SERATO_2B,       -14.0f },
                 { ETimecodeContol::SERATO_CD,       0.0f },
                 { ETimecodeContol::TRACTOR_A,       0.0f },
                 { ETimecodeContol::TRACTOR_B,       0.0f },
@@ -122,12 +122,12 @@ namespace nap
             mPitch.store(timecoder_get_pitch(&mImpl->mTimeCoder));
             int result = timecoder_get_position(&mImpl->mTimeCoder, &mPosition);
             bool valid = result != -1;
-            mCurrentTimecodeValid.store(valid);
             if (valid)
             {
                 auto position = static_cast<unsigned int>(result);
                 mTime.store(static_cast<double>(position) / 1000 + timecoderOffsets[mControl]);
             }
+            mCurrentTimecodeValid.store(valid);
             mDirty.set();
 
             auto& buffer_left = getOutputBuffer(audioOutputLeft);
