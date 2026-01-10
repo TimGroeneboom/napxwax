@@ -96,8 +96,8 @@ namespace audio
         InputPin audioLeft = { this };
         InputPin audioRight = { this };
 
-        OutputPin audioOutputRight = { this };
         OutputPin audioOutputLeft = { this };
+        OutputPin audioOutputRight = { this };
     private:
         /**
          * Implementation in .cpp file
