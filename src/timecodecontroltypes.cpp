@@ -43,20 +43,20 @@ namespace nap
 		}
 
 
-		const std::vector<std::string>& nap::audio::tcControlToList()
+		const std::vector<std::string>& tcControlToList()
 		{
 			return enumToList<ETimecodeContol>();
 		}
 
 
 
-		const std::vector<std::string>& nap::audio::tcModeToList()
+		const std::vector<std::string>& tcModeToList()
 		{
 			return enumToList<ETimecodeMode>();
 		}
 
 
-		const std::vector<std::string>& nap::audio::tcRPMtoList()
+		const std::vector<std::string>& tcRPMtoList()
 		{
 			return enumToList<ETimeCodeSpeed>();
 		}
