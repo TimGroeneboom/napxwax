@@ -6,6 +6,7 @@
 #include <audio/core/audionode.h>
 #include <audio/core/audionodemanager.h>
 #include <audio/core/audiopin.h>
+#include <mathutils.h>
 
 #include "timecoder_wrapper.h"
 #include "nap/logger.h"
@@ -31,6 +32,20 @@ namespace nap
         };
 
 
+        static std::unordered_map<ETimecodeContol, float> timecoderOffsets =
+        {
+			{ ETimecodeContol::SERATO_2A,       -25.0f },
+            { ETimecodeContol::SERATO_2B,       -08.5f },
+            { ETimecodeContol::SERATO_CD,       0.0f },
+            { ETimecodeContol::TRACTOR_A,       0.0f },
+            { ETimecodeContol::TRACTOR_B,       0.0f },
+            { ETimecodeContol::MIXVIBES_V2,     0.0f },
+            { ETimecodeContol::MIXVIBES_7INCH,  0.0f },
+            { ETimecodeContol::PIONEER_A,       0.0f },
+            { ETimecodeContol::PIONEER_B,       0.0f }
+        };
+
+
         class TimecoderNode::Impl
         {
         public:
@@ -47,14 +62,13 @@ namespace nap
             timecoder mTimeCoder;
         };
 
+
         TimecoderNode::TimecoderNode(NodeManager& nodeManager) : TimecoderNode(nodeManager, 1.0f, ETimecodeContol::SERATO_CD)
-        {
-        }
+        { }
 
 
-        TimecoderNode::TimecoderNode(NodeManager& nodeManager,
-                                     float referenceSpeed,
-                                     ETimecodeContol control) : Node(nodeManager)
+
+        TimecoderNode::TimecoderNode(NodeManager& nodeManager, float referenceSpeed, ETimecodeContol control) : Node(nodeManager)
         {
             mReferenceSpeed = referenceSpeed;
             mControl = control;
@@ -62,8 +76,7 @@ namespace nap
         }
 
 
-        TimecoderNode::~TimecoderNode()
-        {
+        TimecoderNode::~TimecoderNode() {
         }
 
 
@@ -96,8 +109,8 @@ namespace nap
                     task();
             }
 
-            mBuffers[0] = audioLeft.pull();
-            mBuffers[1] = audioRight.pull();
+            mBuffers[0] = audioInputLeft.pull();
+            mBuffers[1] = audioInputRight.pull();
 
             for (auto s = 0; s < getBufferSize(); ++s)
             {
@@ -107,7 +120,14 @@ namespace nap
             }
 
             mPitch.store(timecoder_get_pitch(&mImpl->mTimeCoder));
-            mTime.store(static_cast<double>(timecoder_get_position(&mImpl->mTimeCoder, &mPosition)) / 1000);
+            int result = timecoder_get_position(&mImpl->mTimeCoder, &mPosition);
+            bool valid = result != -1;
+            mCurrentTimecodeValid.store(valid);
+            if (valid)
+            {
+                auto position = static_cast<unsigned int>(result);
+                mTime.store(static_cast<double>(position) / 1000 + timecoderOffsets[mControl]);
+            }
             mDirty.set();
 
             auto& buffer_left = getOutputBuffer(audioOutputLeft);
@@ -117,18 +137,20 @@ namespace nap
         }
 
 
-        bool TimecoderNode::consumeTimeAndPitch(double &time, double &pitch)
+        bool TimecoderNode::consumeTimeAndPitch(double &time, double &pitch, bool &timecodeValid)
         {
             bool return_value = false;
             if(mDirty.check())
             {
                 mConsumedTime = mTime.load();
                 mConsumedPitch = mPitch.load();
+                mConsumedTimecodeValid = mCurrentTimecodeValid.load();
                 return_value = true;
             }
 
             time = mConsumedTime;
             pitch = mConsumedPitch;
+            timecodeValid = mConsumedTimecodeValid;
 
             return return_value;
         }
@@ -146,11 +168,11 @@ namespace nap
 
         void TimecoderNode::changeReferenceSpeed(float referenceSpeed)
         {
-            if(mReferenceSpeed != referenceSpeed)
-            {
-                mReferenceSpeed = referenceSpeed;
-                createTimecoder();
-            }
+			if (!math::equal(referenceSpeed, mReferenceSpeed))
+			{
+				mReferenceSpeed = referenceSpeed;
+				createTimecoder();
+			}
         }
 
 
